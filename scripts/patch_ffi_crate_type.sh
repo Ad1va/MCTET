@@ -30,6 +30,8 @@ case "$MODE" in
     ;;
 esac
 
+export CRATE_TYPE
+
 TMP="$(mktemp)"
 perl -0777 -pe '
   my $crate_type = $ENV{"CRATE_TYPE"};
