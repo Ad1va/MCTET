@@ -40,11 +40,12 @@ jobs:
       - name: Verify Rust targets
         run: rustup target list --installed
 
-      - name: Install protoc
+      - name: Install protoc and patchelf
         run: |
           sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
+          sudo apt-get install -y protobuf-compiler patchelf
           which protoc && protoc --version
+          which patchelf && patchelf --version
 
       - name: Fetch EasyTier
         run: bash ./scripts/fetch_easytier.sh --url "$REPO_URL" ${ET_REF:+--ref "$ET_REF"}
@@ -66,12 +67,19 @@ jobs:
             find dist third_party/easytier/target -type f -name 'libeasytier_android_jni.so' -print || true
             exit 1
           fi
+          if [ ! -f "dist/$abi/libeasytier_ffi.so" ]; then
+            echo "ERROR: libeasytier_ffi.so not found for $abi"
+            find dist third_party/easytier/target -type f -name 'libeasytier_ffi.so' -print || true
+            exit 1
+          fi
           find dist -maxdepth 2 -type f -print
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.abi }}
-          path: dist/${{ matrix.abi }}/libeasytier_android_jni.so
+          path: |
+            dist/${{ matrix.abi }}/libeasytier_android_jni.so
+            dist/${{ matrix.abi }}/libeasytier_ffi.so
 
   package:
     runs-on: ubuntu-latest
@@ -119,15 +127,17 @@ jobs:
           JNI_DIR="android/library/src/main/jniLibs"
           for abi in arm64-v8a armeabi-v7a x86 x86_64; do
             mkdir -p "$JNI_DIR/$abi"
-            src="dist/$abi/libeasytier_android_jni.so"
-            if [ -f "$src" ]; then
-              cp "$src" "$JNI_DIR/$abi/"
-              echo "Copied $abi"
-            else
-              echo "ERROR: $src not found"
-              find dist -type f -print
-              exit 1
-            fi
+            for lib in libeasytier_ffi.so libeasytier_android_jni.so; do
+              src="dist/$abi/$lib"
+              if [ -f "$src" ]; then
+                cp "$src" "$JNI_DIR/$abi/"
+                echo "Copied $abi/$lib"
+              else
+                echo "ERROR: $src not found"
+                find dist -type f -print
+                exit 1
+              fi
+            done
           done
           find "$JNI_DIR" -name '*.so' -print
 

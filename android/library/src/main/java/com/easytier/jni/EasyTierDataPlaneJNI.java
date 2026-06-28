@@ -2,6 +2,7 @@ package com.easytier.jni;
 
 public final class EasyTierDataPlaneJNI {
     static {
+        System.loadLibrary("easytier_ffi");
         System.loadLibrary("easytier_android_jni");
     }
 

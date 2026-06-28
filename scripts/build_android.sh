@@ -94,22 +94,34 @@ fi
 echo ">> Using JNI MANIFEST: $JNI_MANIFEST"
 
 FFI_MANIFEST="$REPO_DIR/easytier-contrib/easytier-ffi/Cargo.toml"
-if [[ -f "$FFI_MANIFEST" ]]; then
-  echo ">> Patching easytier-ffi crate-type to rlib only..."
-  sed -i.bak 's/crate-type = \["cdylib", "rlib"\]/crate-type = ["rlib"]/' "$FFI_MANIFEST" || true
-  sed -i.bak 's/crate-type = \[.*cdylib.*\]/crate-type = ["rlib"]/' "$FFI_MANIFEST" || true
-  echo ">> Patched: $FFI_MANIFEST"
-else
-  echo ">> WARNING: easytier-ffi/Cargo.toml not found, skipping patch"
+if [[ ! -f "$FFI_MANIFEST" ]]; then
+  echo "ERROR: Cannot locate Cargo.toml for easytier-ffi crate." >&2
+  find "$REPO_DIR" -maxdepth 6 -type f -name Cargo.toml -print >&2 || true
+  exit 1
 fi
+
+"$ROOT_DIR/scripts/patch_ffi_crate_type.sh" "$FFI_MANIFEST" cdylib
 
 mkdir -p "$DIST_DIR"
 pushd "$REPO_DIR" >/dev/null
+
+echo ">> Building libeasytier_ffi.so for ABIs: $ABIS"
+cargo ndk -o "$DIST_DIR" -t "$ABIS" -- build $PROFILE_FLAG --manifest-path "$FFI_MANIFEST" --features "c-abi,ffi-dataplane"
 
 echo ">> Building libeasytier_android_jni.so for ABIs: $ABIS"
 cargo ndk -o "$DIST_DIR" -t "$ABIS" -- build $PROFILE_FLAG --manifest-path "$JNI_MANIFEST"
 
 popd >/dev/null
 
+if command -v patchelf >/dev/null; then
+  while IFS= read -r jni_so; do
+    if ! patchelf --print-needed "$jni_so" | grep -qx 'libeasytier_ffi.so'; then
+      patchelf --add-needed libeasytier_ffi.so "$jni_so"
+    fi
+  done < <(find "$DIST_DIR" -maxdepth 2 -name 'libeasytier_android_jni.so' -print)
+else
+  echo ">> WARNING: patchelf not found; libeasytier_android_jni.so may rely on System.loadLibrary preload"
+fi
+
 echo ">> Build complete. Outputs:"
-find "$DIST_DIR" -maxdepth 2 -name 'libeasytier_android_jni.so' -print
+find "$DIST_DIR" -maxdepth 2 \( -name 'libeasytier_android_jni.so' -o -name 'libeasytier_ffi.so' \) -print
