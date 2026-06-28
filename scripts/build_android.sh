@@ -54,12 +54,16 @@ elif [[ -n "$REF" ]]; then
   git -C "$REPO_DIR" checkout --recurse-submodules "$REF"
 fi
 
-# 4) Ensure Rust android targets
+# 4) Ensure Rust android targets on the active EasyTier toolchain
+pushd "$REPO_DIR" >/dev/null
+rustup show active-toolchain
 rustup target add \
   aarch64-linux-android \
   armv7-linux-androideabi \
   i686-linux-android \
   x86_64-linux-android
+rustup target list --installed
+popd >/dev/null
 
 # 5) Detect FFI crate manifest (robust)
 FFI_MANIFEST="${FFI_MANIFEST:-}"
