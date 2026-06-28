@@ -24,7 +24,7 @@ text = path.read_text(encoding='utf-8')
 required = {
     'default': '["c-abi", "ffi-dataplane"]',
     'c-abi': '[]',
-    'ffi-dataplane': '["easytier/ffi-dataplane"]',
+    'ffi-dataplane': '[]',
 }
 
 features_match = re.search(r'(?ms)^\[features\]\n(?P<body>.*?)(?=^\[|\Z)', text)
