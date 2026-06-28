@@ -147,6 +147,20 @@ jobs:
           cd android
           gradle :library:assembleRelease
 
+      - name: Setup Android NDK for diagnostics
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r27
+
+      - name: Diagnose native libraries
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          sed -i 's/\r$//' scripts/*.sh
+          chmod +x scripts/*.sh
+          bash ./scripts/diagnose_native.sh
+
       - name: Collect AAR
         run: |
           mkdir -p artifacts
@@ -173,3 +187,8 @@ jobs:
         with:
           name: easytier-aar
           path: artifacts/*.aar
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: easytier-native-diagnostics
+          path: artifacts/easytier-native-diagnostics.txt
