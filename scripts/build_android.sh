@@ -101,6 +101,10 @@ if [[ ! -f "$FFI_MANIFEST" ]]; then
 fi
 
 "$ROOT_DIR/scripts/patch_ffi_crate_type.sh" "$FFI_MANIFEST" cdylib
+"$ROOT_DIR/scripts/patch_ffi_features.sh" "$FFI_MANIFEST"
+
+echo ">> easytier-ffi manifest after patch:"
+sed -n '1,80p' "$FFI_MANIFEST"
 
 mkdir -p "$DIST_DIR"
 pushd "$REPO_DIR" >/dev/null
