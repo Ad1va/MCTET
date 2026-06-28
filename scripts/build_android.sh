@@ -92,6 +92,17 @@ if [[ ! -f "$JNI_MANIFEST" ]]; then
 fi
 
 echo ">> Using JNI MANIFEST: $JNI_MANIFEST"
+
+FFI_MANIFEST="$REPO_DIR/easytier-contrib/easytier-ffi/Cargo.toml"
+if [[ -f "$FFI_MANIFEST" ]]; then
+  echo ">> Patching easytier-ffi crate-type to rlib only..."
+  sed -i.bak 's/crate-type = \["cdylib", "rlib"\]/crate-type = ["rlib"]/' "$FFI_MANIFEST" || true
+  sed -i.bak 's/crate-type = \[.*cdylib.*\]/crate-type = ["rlib"]/' "$FFI_MANIFEST" || true
+  echo ">> Patched: $FFI_MANIFEST"
+else
+  echo ">> WARNING: easytier-ffi/Cargo.toml not found, skipping patch"
+fi
+
 mkdir -p "$DIST_DIR"
 pushd "$REPO_DIR" >/dev/null
 
