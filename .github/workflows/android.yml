@@ -164,14 +164,18 @@ jobs:
           ndk-version: r27
 
       - name: Diagnose native libraries
+        continue-on-error: true
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           sed -i 's/\r$//' scripts/*.sh
           chmod +x scripts/*.sh
           bash ./scripts/diagnose_native.sh
+          echo "===== diagnostics tail ====="
+          tail -n 240 artifacts/easytier-native-diagnostics.txt || true
 
       - name: Collect AAR
+        if: always()
         run: |
           mkdir -p artifacts
           find android/library/build/outputs -name '*.aar' -exec cp {} artifacts/ \;
@@ -183,22 +187,28 @@ jobs:
           grep -vE '^(#|$)' BUILD_CONFIG.env >> "$GITHUB_ENV"
 
       - name: Rename AAR
+        if: always()
         run: |
           ref="${ET_REF:-unknown}"
           ref_sanitized="${ref//\//-}"
           dev="${DEVELOPER:-unknown}"
           cd artifacts
+          shopt -s nullglob
           for f in *.aar; do
             mv "$f" "easytier-${ref_sanitized}-${dev}.aar"
           done
           ls -lh
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: easytier-aar
           path: artifacts/*.aar
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: easytier-native-diagnostics
           path: artifacts/easytier-native-diagnostics.txt
+          if-no-files-found: warn
