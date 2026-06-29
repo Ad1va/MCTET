@@ -93,6 +93,23 @@ fi
 
 echo ">> Using JNI MANIFEST: $JNI_MANIFEST"
 
+JNI_SRC_DIR="$(dirname "$JNI_MANIFEST")/src"
+JNI_LIB_RS="$JNI_SRC_DIR/lib.rs"
+JNI_DATA_PLANE_RS="$JNI_SRC_DIR/data_plane_api.rs"
+if [[ ! -f "$JNI_LIB_RS" || ! -f "$JNI_DATA_PLANE_RS" ]]; then
+  echo "ERROR: EasyTier Android JNI source does not contain data-plane module." >&2
+  echo "ERROR: Expected files:" >&2
+  echo "ERROR:   $JNI_LIB_RS" >&2
+  echo "ERROR:   $JNI_DATA_PLANE_RS" >&2
+  echo "ERROR: ET_REF=${ET_REF:-} is not suitable for MCT Android no-tun join mode." >&2
+  exit 1
+fi
+if ! grep -q 'export_data_plane_jni' "$JNI_LIB_RS"; then
+  echo "ERROR: EasyTier Android JNI lib.rs does not export data-plane JNI symbols." >&2
+  echo "ERROR: ET_REF=${ET_REF:-} is not suitable for MCT Android no-tun join mode." >&2
+  exit 1
+fi
+
 FFI_MANIFEST="$REPO_DIR/easytier-contrib/easytier-ffi/Cargo.toml"
 if [[ ! -f "$FFI_MANIFEST" ]]; then
   echo "ERROR: Cannot locate Cargo.toml for easytier-ffi crate." >&2
