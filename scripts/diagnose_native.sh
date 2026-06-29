@@ -110,7 +110,7 @@ while IFS= read -r so; do
     log "data-plane JNI symbols:"
     "$READELF" -Ws "$so" 2>&1 | grep -E 'Java_com_easytier_jni_EasyTierDataPlaneJNI_dataPlaneTcpConnectStart|Java_com_easytier_jni_EasyTierJNI_dataPlaneTcpConnectStart|data_plane_tcp_connect_start' >> "$REPORT_FILE" || true
     if [[ "$(basename "$so")" == "libeasytier_android_jni.so" ]]; then
-      if "$READELF" -Ws "$so" 2>/dev/null | grep -q 'Java_com_easytier_jni_EasyTierDataPlaneJNI_dataPlaneTcpConnectStart'; then
+      if "$READELF" -Ws "$so" 2>/dev/null | grep -Eq 'Java_com_easytier_jni_EasyTierDataPlaneJNI_dataPlaneTcpConnectStart|Java_com_easytier_jni_EasyTierJNI_dataPlaneTcpConnectStart'; then
         log "DATA_PLANE_JNI_CHECK=PASS"
       else
         log "DATA_PLANE_JNI_CHECK=FAIL"
@@ -138,7 +138,7 @@ section "Conclusion Hints"
 log "If collect_network_infos appears as UND in libeasytier_android_jni.so, the JNI library still has an unresolved external symbol."
 log "If another .so exports collect_network_infos but is not present in the AAR/APK, it must be packaged and loaded before libeasytier_android_jni.so."
 log "If no library exports collect_network_infos, the EasyTier source/build needs a code-level patch or link argument correction."
-log "DATA_PLANE_JNI_REQUIRED_SYMBOL=Java_com_easytier_jni_EasyTierDataPlaneJNI_dataPlaneTcpConnectStart"
+log "DATA_PLANE_JNI_REQUIRED_SYMBOL=Java_com_easytier_jni_EasyTierDataPlaneJNI_dataPlaneTcpConnectStart or Java_com_easytier_jni_EasyTierJNI_dataPlaneTcpConnectStart"
 
 log ""
 log "Report written to: $REPORT_FILE"
