@@ -1,0 +1,8 @@
+-keep class com.easytier.jni.** { *; }
+-keepclassmembers class com.easytier.jni.DataPlaneSocketAddress { *; }
+-keepclassmembers class com.easytier.jni.DataPlaneTcpConnectResult { *; }
+-keepclassmembers class com.easytier.jni.DataPlaneTcpBindResult { *; }
+-keepclassmembers class com.easytier.jni.DataPlaneTcpAcceptResult { *; }
+-keepclassmembers class com.easytier.jni.DataPlaneTcpReadResult { *; }
+-keepclassmembers class com.easytier.jni.DataPlaneUdpBindResult { *; }
+-keepclassmembers class com.easytier.jni.DataPlaneUdpRecvResult { *; }

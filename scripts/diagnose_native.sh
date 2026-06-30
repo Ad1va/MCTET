@@ -132,6 +132,20 @@ if [[ -d "$ROOT_DIR/android/library/build/outputs" ]]; then
     log "--- AAR: $aar ---"
     run_capture ls -lh "$aar"
     run_capture unzip -l "$aar"
+    tmp_aar_dir="$(mktemp -d)"
+    unzip -q "$aar" classes.jar -d "$tmp_aar_dir" 2>/dev/null || true
+    if [[ -f "$tmp_aar_dir/classes.jar" ]]; then
+      log ""
+      log "DataPlane Java API fields:"
+      javap -classpath "$tmp_aar_dir/classes.jar" com.easytier.jni.DataPlaneTcpConnectResult 2>&1 | tee -a "$REPORT_FILE" || true
+      javap -classpath "$tmp_aar_dir/classes.jar" com.easytier.jni.DataPlaneSocketAddress 2>&1 | tee -a "$REPORT_FILE" || true
+      if javap -classpath "$tmp_aar_dir/classes.jar" com.easytier.jni.DataPlaneTcpConnectResult 2>/dev/null | grep -q 'public final long handle'; then
+        log "DATA_PLANE_JAVA_FIELD_CHECK=PASS"
+      else
+        log "DATA_PLANE_JAVA_FIELD_CHECK=FAIL"
+      fi
+    fi
+    rm -rf "$tmp_aar_dir"
   done < <(find "$ROOT_DIR/android/library/build/outputs" -type f -name '*.aar' | sort)
 else
   log "No AAR output directory yet"
